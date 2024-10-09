@@ -1,25 +1,26 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { assets } from "../assets/assets";
-import LoginPopup from "./LoginPopup";
 import { useContext, useState } from "react";
 import { StoreContext } from "../Context/StoreContext";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import LoginPopup from "./LoginPopup";
 
-const Navbar = () => {
+const Navbar = ({ setShowLogin }) => {
   const [selectedMenu, setSelectedMenu] = useState("home");
-
-  const { getCount } = useContext(StoreContext);
-  const [showForm, setShowForm] = useState(false);
-
-  const handleSignInClick = () => {
-    setShowForm(!showForm);
+  const { getTotalCartAmount, getCount, token, setToken } =
+    useContext(StoreContext);
+  const navigate = useNavigate();
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
   };
 
   return (
     <div className="flex w-[90%] justify-between m-auto items-center py-2 px-0 bg-cover max-h-[100px] ">
       <Link to="/">
-        <div className="w-[120px] h-[120px] ">
+        <div className="w-[120px] h-[120px]">
           <img src={assets.logo} alt="logo" />
         </div>
       </Link>
@@ -75,26 +76,32 @@ const Navbar = () => {
           <p className="text-[#dd3835] font-bold">{getCount()}</p>
         </div>
       </div>
-      <div className="flex rounded-[20px] border-[2.5px] w-[200px] border-[#A70604] gap-2 h-[30px] my-2">
-        <div className="bg-[#A70604] flex items-center justify-center w-[110px] rounded-l-[20px]">
-          <span
-            className="text-white cursor-pointer"
-            onClick={handleSignInClick}
+      {!token ? (
+        <div>
+          <button
+            onClick={() => setShowLogin(true)}
+            className="border-none bg-[#A70604] h-[30px] w-[100px] text-white px-[12px] py-[10px] rounded-[15px] cursor-pointer hover:bg-black flex items-center justify-center"
           >
             Sign In
-          </span>
-          {showForm && <LoginPopup handleSignInClick={handleSignInClick} />}
+          </button>
         </div>
-        <div className="bg-white flex items-center justify-center w-[90px] rounded-r-[20px]">
-          <span
-            className="text-[#dd3835] cursor-pointer"
-            onClick={handleSignInClick}
-          >
-            Register
-          </span>
-          {showForm && <LoginPopup handleSignInClick={handleSignInClick} />}
+      ) : (
+        <div>
+          <AccountCircleIcon />
+          <ul>
+            <li onClick={navigate("/myorders")}>
+              {""}
+              <ShoppingBagIcon />
+              <p>Oders</p>
+            </li>
+            <hr />
+            <li onClick={logout}>
+              {""}
+              <p>Logout</p>
+            </li>
+          </ul>
         </div>
-      </div>
+      )}
     </div>
   );
 };

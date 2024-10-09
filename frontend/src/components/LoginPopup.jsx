@@ -1,123 +1,110 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import CancelIcon from "@mui/icons-material/Cancel";
-import axios from "axios";
-// eslint-disable-next-line react/prop-types
-const LoginPopup = ({ handleSignInClick }) => {
-  const [currState, setCurrState] = useState("Sign In or Register");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+import { toast } from "react-toastify";
+import { StoreContext } from "../Context/StoreContext";
 
-  const handelSubmit = () => {
-    if (currState === "Sign Up") {
-      axios
-        .post("http://localhost:4000/api/user/register", {
-          name,
-          email,
-          password,
-        })
-        .then((response) => {
-          if (response.data.success) {
-            handleSignInClick(false);
-          } else {
-            setErrorMessage(response.data.message);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    } else {
-      axios
-        .post("http://localhost:4000/api/user/login", { email, password })
-        .then((response) => {
-          if (response.data.success) {
-            handleSignInClick(false);
-          } else {
-            setErrorMessage(response.data.message);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-
-    const handleSubmit = (event) => {
-      event.preventDefault();
+const LoginPopup = ({ setShowLogin }) => {
+  const { setToken, url, loadCartData } = useContext(StoreContext);
+  const [currState, setCurrState] = useState("Sign In");
+  const [data, setData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  useEffect(() => {
+    document.body.classList.add("no-scroll");
+    return () => {
+      document.body.classList.remove("no-scroll");
     };
-
-    useEffect(() => {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "unset";
-      };
-    }, []);
-
-    return (
-      <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <form className="bg-white p-8 rounded-lg w-96" onSubmit={handleSubmit}>
-          <div className="flex  justify-between items-center mb-[20px]">
-            <h2 className="text-[#A70604] font-bold text-2xl">{currState}</h2>
-            <CancelIcon
-              onClick={() => handleSignInClick(false)}
-              className="cursor-pointer hover:text-[#A70604]"
-            />
-          </div>
-          <div className="flex flex-col gap-4">
+  }, []);
+  const onChangeHandler = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+    setData((data) => ({ ...data, [name]: value }));
+  };
+  const onLogin = async (e) => {
+    e.preventDefault();
+    let new_url = url;
+    if (currState === "Login") {
+      new_url += "/api/users/login";
+    } else {
+      new_url += "/api/users/register";
+    }
+    const response = await axios.post(new_url, data);
+    if (response.data.success) {
+      setToken(response.data.token);
+      localStorage.setItem("token", response.data.token);
+      loadCartData({ token: response.data.token });
+      setShowLogin(false);
+    } else {
+      toast.error(response.data.message);
+    }
+  };
+  return (
+    <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <form className="bg-white p-8 rounded-lg w-96" onSubmit={onLogin}>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-[#A70604] font-bold text-2xl">{currState}</h2>
+          <CancelIcon
+            onClick={() => setShowLogin(false)}
+            className="cursor-pointer hover:text-[#A70604]"
+          />
+        </div>
+        <div className="flex flex-col gap-4">
+          {currState === "Sign Up" && (
             <input
+              name="username"
+              onChange={onChangeHandler}
+              value={data.name}
               type="text"
               placeholder="Username"
               className="border border-gray-300 p-2 rounded-lg"
               required
             />
-            <input
-              name="email"
-              type="email"
-              placeholder="Your Email"
-              className="border border-gray-300 p-2 rounded-lg"
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="border border-gray-300 p-2 rounded-lg"
-              required
-            />
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="terms" required />
-              <label htmlFor="terms" className="text-sm">
-                By continuing, I agree to the terms of use & privacy policy.
-              </label>
-            </div>
-            <button
-              type="submit"
-              className="bg-[#A70604] text-white p-2 rounded-[10px] mt-2 hover:bg-black"
+          )}
+          <input
+            name="email"
+            onChange={onChangeHandler}
+            value={data.email}
+            type="email"
+            placeholder="Your Email"
+            className="border border-gray-300 p-2 rounded-lg"
+            required
+          />
+          <input
+            name="password"
+            onChange={onChangeHandler}
+            value={data.password}
+            type="password"
+            placeholder="Password"
+            className="border border-gray-300 p-2 rounded-lg"
+            required
+          />
+          <button
+            type="submit"
+            className="bg-[#A70604] text-white p-2 rounded-lg mt-2 hover:bg-black"
+          >
+            {currState}
+          </button>
+        </div>
+        <div className="mt-4 text-sm">
+          <p>
+            {currState === "Sign In"
+              ? "Create a new Account?"
+              : "Already have an account?"}{" "}
+            <span
+              onClick={() =>
+                setCurrState(currState === "Sign In" ? "Sign Up" : "Sign In")
+              }
+              className="text-[#A70604] pl-1 cursor-pointer font-medium hover:text-black"
             >
-              Login
-            </button>
-          </div>
-          <div className="mt-4 text-sm">
-            <p>
-              Create a new Account?{" "}
-              <span
-                onClick={() => setCurrState("Sign Up")}
-                className="text-[#A70604] pl-[3px] cursor-pointer font-medium hover:text-black"
-              >
-                Click Here
-              </span>
-            </p>
-            <p>
-              Already have an account?{" "}
-              <span
-                onClick={() => setCurrState("Login")}
-                className="text-[#A70604] pl-[3px] cursor-pointer font-medium hover:text-black"
-              >
-                Login Here
-              </span>
-            </p>
-          </div>
-        </form>
-      </div>
-    );
-  };
+              {currState === "Sign In" ? "Sign Up Here" : "Login Here"}
+            </span>
+          </p>
+        </div>
+      </form>
+    </div>
+  );
 };
+
 export default LoginPopup;
